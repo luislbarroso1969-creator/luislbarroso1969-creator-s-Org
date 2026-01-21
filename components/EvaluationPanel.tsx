@@ -10,14 +10,14 @@ interface EvaluationPanelProps {
 
 const ScoreButtons: React.FC<{
   current: 1 | 3 | 5 | 0;
-  onChange: (val: 1 | 3 | 5) => void;
+  onChange: (val: 1 | 3 | 5 | 0) => void;
 }> = ({ current, onChange }) => (
-  <div className="flex gap-2">
+  <div className="flex gap-1.5 items-center">
     {[1, 3, 5].map((val) => (
       <button
         key={val}
         onClick={() => onChange(val as 1 | 3 | 5)}
-        className={`w-10 h-10 rounded-lg font-bold transition-all border-2 ${
+        className={`w-9 h-9 rounded-lg font-bold transition-all border-2 text-sm ${
           current === val 
           ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm' 
           : 'bg-white text-slate-400 border-slate-200 hover:border-indigo-300'
@@ -26,6 +26,17 @@ const ScoreButtons: React.FC<{
         {val}
       </button>
     ))}
+    {current > 0 && (
+      <button 
+        onClick={() => onChange(0)}
+        className="ml-1 p-1.5 text-slate-300 hover:text-rose-500 transition-colors"
+        title="Remover pontuação deste item"
+      >
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    )}
   </div>
 );
 
@@ -37,7 +48,7 @@ export const EvaluationPanel: React.FC<EvaluationPanelProps> = ({ employee, onUp
     onUpdate({ ...employee, [field]: value });
   };
 
-  const updateScore = (type: 'objectives' | 'competencies', id: string, value: 1 | 3 | 5) => {
+  const updateScore = (type: 'objectives' | 'competencies', id: string, value: 1 | 3 | 5 | 0) => {
     const updated = { ...employee };
     const list = [...updated[type]];
     const index = list.findIndex(item => item.id === id);
@@ -57,10 +68,12 @@ export const EvaluationPanel: React.FC<EvaluationPanelProps> = ({ employee, onUp
   };
 
   const stats = calculateEvaluation(employee);
+  const activeObjs = employee.objectives.filter(o => o.value > 0).length;
+  const activeComps = employee.competencies.filter(c => c.value > 0).length;
 
   return (
     <div className="bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden flex flex-col h-full">
-      {/* Header with Editable Fields */}
+      {/* Header */}
       <div className="bg-slate-900 text-white p-6">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div className="flex-1 w-full space-y-2">
@@ -72,9 +85,6 @@ export const EvaluationPanel: React.FC<EvaluationPanelProps> = ({ employee, onUp
                 placeholder="Nome do Colaborador"
                 className="bg-transparent text-2xl font-bold w-full border-b border-transparent hover:border-slate-700 focus:border-indigo-500 focus:outline-none transition-colors py-1"
               />
-              <div className="absolute right-0 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-50 pointer-events-none">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
-              </div>
             </div>
             
             <div className="flex items-center gap-4">
@@ -102,18 +112,26 @@ export const EvaluationPanel: React.FC<EvaluationPanelProps> = ({ employee, onUp
       <div className="flex-1 overflow-y-auto p-6 space-y-8">
         {/* Statistics Summary */}
         <div className="grid grid-cols-2 gap-4">
-          <div className="p-4 bg-indigo-50 rounded-xl border border-indigo-100 transition-all hover:shadow-inner">
-            <span className="text-xs font-bold text-indigo-600 uppercase block mb-1">Média Objetivos (60%)</span>
+          <div className="p-4 bg-indigo-50 rounded-xl border border-indigo-100">
+            <div className="flex justify-between items-start mb-1">
+              <span className="text-xs font-bold text-indigo-600 uppercase">Média Objetivos (60%)</span>
+              <span className="text-[10px] bg-indigo-200 text-indigo-700 px-1.5 py-0.5 rounded font-bold">
+                {activeObjs} itens
+              </span>
+            </div>
             <div className="flex items-baseline gap-2">
               <span className="text-3xl font-black text-slate-800">{stats.objectivesScore.toFixed(2)}</span>
-              <span className="text-xs text-slate-400">/ 5.00</span>
             </div>
           </div>
-          <div className="p-4 bg-violet-50 rounded-xl border border-violet-100 transition-all hover:shadow-inner">
-            <span className="text-xs font-bold text-violet-600 uppercase block mb-1">Média Competências (40%)</span>
+          <div className="p-4 bg-violet-50 rounded-xl border border-violet-100">
+            <div className="flex justify-between items-start mb-1">
+              <span className="text-xs font-bold text-violet-600 uppercase">Média Competências (40%)</span>
+              <span className="text-[10px] bg-violet-200 text-violet-700 px-1.5 py-0.5 rounded font-bold">
+                {activeComps} itens
+              </span>
+            </div>
             <div className="flex items-baseline gap-2">
               <span className="text-3xl font-black text-slate-800">{stats.competenciesScore.toFixed(2)}</span>
-              <span className="text-xs text-slate-400">/ 5.00</span>
             </div>
           </div>
         </div>
@@ -123,12 +141,16 @@ export const EvaluationPanel: React.FC<EvaluationPanelProps> = ({ employee, onUp
           <section className="space-y-4">
             <h3 className="flex items-center gap-2 font-bold text-slate-800 text-lg pb-2 border-b">
               <span className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-xs font-black">01</span>
-              Objetivos Individuais (6)
+              Objetivos Individuais
             </h3>
-            <div className="space-y-3">
+            <div className="space-y-2.5">
               {employee.objectives.map((obj) => (
-                <div key={obj.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-xl hover:bg-slate-100 transition-colors border border-transparent hover:border-slate-200">
-                  <span className="text-slate-700 font-semibold text-sm">{obj.label}</span>
+                <div key={obj.id} className={`flex items-center justify-between p-3 rounded-xl transition-all border ${
+                  obj.value > 0 ? 'bg-white border-slate-200 shadow-sm' : 'bg-slate-50 border-transparent opacity-60'
+                }`}>
+                  <span className={`text-sm font-semibold ${obj.value > 0 ? 'text-slate-700' : 'text-slate-400'}`}>
+                    {obj.label}
+                  </span>
                   <ScoreButtons current={obj.value} onChange={(v) => updateScore('objectives', obj.id, v)} />
                 </div>
               ))}
@@ -139,12 +161,16 @@ export const EvaluationPanel: React.FC<EvaluationPanelProps> = ({ employee, onUp
           <section className="space-y-4">
             <h3 className="flex items-center gap-2 font-bold text-slate-800 text-lg pb-2 border-b">
               <span className="w-8 h-8 rounded-full bg-violet-100 text-violet-600 flex items-center justify-center text-xs font-black">02</span>
-              Competências (8)
+              Competências
             </h3>
-            <div className="space-y-3">
+            <div className="space-y-2.5">
               {employee.competencies.map((comp) => (
-                <div key={comp.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-xl hover:bg-slate-100 transition-colors border border-transparent hover:border-slate-200">
-                  <span className="text-slate-700 font-semibold text-sm">{comp.label}</span>
+                <div key={comp.id} className={`flex items-center justify-between p-3 rounded-xl transition-all border ${
+                  comp.value > 0 ? 'bg-white border-slate-200 shadow-sm' : 'bg-slate-50 border-transparent opacity-60'
+                }`}>
+                  <span className={`text-sm font-semibold ${comp.value > 0 ? 'text-slate-700' : 'text-slate-400'}`}>
+                    {comp.label}
+                  </span>
                   <ScoreButtons current={comp.value} onChange={(v) => updateScore('competencies', comp.id, v)} />
                 </div>
               ))}
@@ -161,19 +187,14 @@ export const EvaluationPanel: React.FC<EvaluationPanelProps> = ({ employee, onUp
             </h3>
             <button 
               onClick={handleAIRequest}
-              disabled={isAnalyzing}
+              disabled={isAnalyzing || (activeObjs === 0 && activeComps === 0)}
               className={`px-6 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 transition-all active:scale-95 ${
-                isAnalyzing ? 'bg-slate-200 text-slate-500' : 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-lg shadow-indigo-200'
+                isAnalyzing || (activeObjs === 0 && activeComps === 0)
+                ? 'bg-slate-200 text-slate-500 cursor-not-allowed' 
+                : 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-lg shadow-indigo-200'
               }`}
             >
-              {isAnalyzing ? (
-                <>
-                  <svg className="animate-spin h-4 w-4 text-slate-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                  A gerar parecer...
-                </>
-              ) : (
-                'Gerar Parecer Automático'
-              )}
+              {isAnalyzing ? 'A gerar...' : 'Gerar Parecer'}
             </button>
           </div>
           
@@ -182,11 +203,8 @@ export const EvaluationPanel: React.FC<EvaluationPanelProps> = ({ employee, onUp
               {aiAnalysis}
             </div>
           ) : (
-            <div className="bg-slate-50 border-2 border-dashed border-slate-200 p-10 rounded-2xl text-center">
-               <div className="text-slate-300 mb-2 flex justify-center">
-                 <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-               </div>
-               <p className="text-slate-400 text-sm font-medium">Preencha as pontuações e gere um parecer profissional em segundos.</p>
+            <div className="bg-slate-50 border-2 border-dashed border-slate-200 p-10 rounded-2xl text-center text-slate-400 text-sm">
+               Pontue os itens para calcular a média automática. Itens não pontuados não afetam o resultado.
             </div>
           )}
         </section>
