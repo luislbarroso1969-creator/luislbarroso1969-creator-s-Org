@@ -1,7 +1,7 @@
 
 import { Role, Employee } from './types';
 
-export const OBJECTIVES_COUNT = 6;
+export const OBJECTIVES_COUNT = 8;
 export const COMPETENCIES_COUNT = 8;
 export const OBJ_WEIGHT = 0.60;
 export const COMP_WEIGHT = 0.40;
